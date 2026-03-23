@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIRESCO — Load Out Hydraulic Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:#2D6A2D; --green-mid:#3d8c3d; --green-light:#e8f5e9; --green-dim:#c8e6c9;
+  --red:#c62828; --red-bg:#ffebee;
+  --amber:#e65100; --amber-bg:#fff3e0;
+  --ink:#111; --ink2:#444; --ink3:#777;
+  --rule:#e0e0e0; --bg:#f3f4f2; --panel:#fff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;font-size:13px;background:var(--bg);color:var(--ink);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+.header{height:52px;background:var(--green);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;border-bottom:3px solid #1a4a1a}
+.h-logo{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;color:#fff;letter-spacing:2px}
+.h-sep{width:1px;height:22px;background:rgba(255,255,255,.3)}
+.h-title{color:rgba(255,255,255,.88);font-size:13px;font-weight:500}
+.h-chip{margin-left:auto;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;border-radius:2px;letter-spacing:1px}
+.h-print{background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:3px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.3px;transition:background .15s}
+.h-print:hover{background:rgba(255,255,255,.3)}
+
+.body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:320px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--rule);overflow-y:auto;padding:16px}
+.sg-blk{margin-bottom:18px}
+.sg-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);border-bottom:1px solid var(--green-dim);padding-bottom:4px;margin-bottom:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.fld{margin-bottom:7px}
+.fld:last-child{margin-bottom:0}
+.fl{display:block;font-size:10px;font-weight:600;color:var(--ink2);margin-bottom:3px}
+.fs{display:block;font-size:9px;color:var(--ink3);margin-top:2px}
+input,select,textarea{width:100%;padding:5px 8px;border:1px solid var(--rule);border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);background:#fff;outline:none;transition:border-color .15s}
+textarea{font-family:'IBM Plex Sans',sans-serif;font-size:12px;resize:vertical;min-height:60px}
+input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(45,106,45,.12)}
+.pcard{background:var(--green-light);border:1px solid var(--green-dim);border-left:3px solid var(--green);border-radius:4px;padding:10px;margin-bottom:8px}
+.pc-h{font-size:10px;font-weight:700;color:var(--green);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+.note{background:#fffde7;border:1px solid #f9a825;border-radius:3px;padding:8px 10px;font-size:10px;color:#5d4037;line-height:1.6}
+.note strong{color:var(--amber)}
+
+.main{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+
+.hero{background:var(--green);border-radius:5px;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr)}
+.hi{text-align:center;padding:0 6px}
+.hi+.hi{border-left:1px solid rgba(255,255,255,.2)}
+.hl{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:4px}
+.hv{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;color:#fff;line-height:1;margin-bottom:2px}
+.hu{font-size:11px;color:rgba(255,255,255,.5)}
+
+.flags{display:flex;flex-direction:column;gap:5px}
+.flag{display:flex;align-items:flex-start;gap:9px;padding:7px 11px;border-radius:3px;font-size:11.5px;line-height:1.4}
+.fi{font-size:13px;flex-shrink:0;margin-top:1px}
+.f-ok  {background:var(--green-light);color:#1b4a1b;border-left:3px solid var(--green)}
+.f-warn{background:var(--amber-bg);color:#4e2f00;border-left:3px solid var(--amber)}
+.f-err {background:var(--red-bg);color:#5c1010;border-left:3px solid var(--red)}
+
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.ch{background:var(--ink);color:#fff;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:7px 13px}
+.ch.g{background:var(--green)}
+
+.rt{width:100%}
+.rr{display:flex;justify-content:space-between;align-items:center;padding:5px 13px;border-bottom:1px solid #f5f5f5}
+.rr:last-child{border-bottom:none}
+.rr.hi2{background:#f0f7f0}
+.rlab{color:var(--ink3);font-size:11px}
+.rval{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--ink)}
+.rval.em{color:var(--green);font-size:13px}
+
+.bars{padding:12px;display:flex;flex-direction:column;gap:9px}
+.bi{display:flex;align-items:center;gap:8px}
+.bl{font-size:11px;color:var(--ink2);width:145px;flex-shrink:0}
+.bt{flex:1;background:#f0f0f0;border-radius:2px;height:13px;overflow:hidden}
+.bf{height:100%;border-radius:2px;transition:width .3s ease}
+.bf.c1{background:var(--green)}
+.bf.c2{background:#00897b}
+.bf.c3{background:#1565c0}
+.bf.c4{background:#9e9e9e}
+.bn{font-family:'IBM Plex Mono',monospace;font-size:11px;width:52px;text-align:right;color:var(--ink2)}
+
+.syst{width:100%;border-collapse:collapse;font-size:11.5px}
+.syst th{background:var(--ink);color:rgba(255,255,255,.85);padding:7px 13px;text-align:right;font-size:9px;letter-spacing:.8px;text-transform:uppercase;font-weight:600}
+.syst th:first-child{text-align:left}
+.syst td{padding:6px 13px;text-align:right;border-bottom:1px solid #f0f0f0;font-family:'IBM Plex Mono',monospace}
+.syst td:first-child{text-align:left;font-family:'IBM Plex Sans',sans-serif;font-weight:600}
+.syst tr.design td{background:var(--green-light);font-weight:700}
+.syst tr:hover td{background:#f8fbf8}
+.syst tr.design:hover td{background:var(--green-light)}
+
+/* ── PRINT STYLES ── */
+@media print {
+  body{height:auto;overflow:visible;background:#fff}
+  .header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .h-print{display:none}
+  .body{flex-direction:column;overflow:visible}
+  .sidebar{display:none}
+  .main{overflow:visible;padding:0;gap:10px}
+  .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact;border-radius:3px}
+  .flag,.f-ok,.f-warn,.f-err{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cards{grid-template-columns:1fr 1fr}
+  .card{break-inside:avoid}
+  #cap-card{break-inside:avoid}
+  .syst tr.design td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ch,.ch.g{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print-header{display:block !important}
+  .bf{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bt{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="h-logo">VIRESCO</span>
+  <span class="h-sep"></span>
+  <span class="h-title">Load Out Hydraulic Calculator</span>
+  <span class="h-chip">SCHEDULE 80 PVC</span>
+  <button class="h-print" onclick="printReport()">⬡ Print Report</button>
+</div>
+
+<div class="body">
+<div class="sidebar">
+
+  <div class="sg-blk">
+    <div class="sg-lbl">Project Information</div>
+    <div class="fld">
+      <label class="fl">Project Name</label>
+      <input type="text" id="proj_name" placeholder="e.g. Hansen Farm Load Out" oninput="calc()">
+    </div>
+    <div class="g2">
+      <div class="fld">
+        <label class="fl">Customer</label>
+        <input type="text" id="proj_customer" placeholder="Customer name" oninput="calc()">
+      </div>
+      <div class="fld">
+        <label class="fl">Date</label>
+        <input type="date" id="proj_date" oninput="calc()">
+      </div>
+    </div>
+    <div class="fld">
+      <label class="fl">Prepared By</label>
+      <input type="text" id="proj_by" placeholder="Your name" oninput="calc()">
+    </div>
+    <div class="fld">
+      <label class="fl">Description / Notes</label>
+      <textarea id="proj_desc" placeholder="Site description, pump location, special conditions..."></textarea>
+    </div>
+  </div>
+
+  <div class="sg-blk">
+    <div class="sg-lbl">Fluid Properties</div>
+    <div class="g2">
+      <div class="fld">
+        <label class="fl">Specific Gravity</label>
+        <input type="number" id="sg" value="1.02" step="0.01" min="0.8" max="2.5" oninput="calc()">
+      </div>
+      <div class="fld">
+        <label class="fl">Solids (% wt)</label>
+        <input type="number" id="solids" value="3" step="0.5" min="0" max="60" oninput="calc()">
+      </div>
+    </div>
+    <div class="fld">
+      <label class="fl">Fluid Temperature (°F)</label>
+      <input type="number" id="temp" value="70" step="1" min="32" max="180" oninput="calc()">
+    </div>
+  </div>
+
+  <div class="sg-blk">
+    <div class="sg-lbl">Flow &amp; Static Head</div>
+    <div class="g2">
+      <div class="fld">
+        <label class="fl">Truck Capacity (gal)</label>
+        <input type="number" id="truck_cap" value="4000" step="100" min="1" oninput="calc()">
+      </div>
+      <div class="fld">
+        <label class="fl">Target Fill Time (min)</label>
+        <input type="number" id="fill_time" value="20" step="1" min="1" oninput="calc()">
+      </div>
+    </div>
+    <div id="gpm-flag-inline" style="margin-top:4px;margin-bottom:7px"></div>
+    <div class="g2">
+      <div class="fld">
+        <label class="fl">Suction Lift (ft)</label>
+        <input type="number" id="slift" value="5" step="0.5" oninput="calc()">
+        <span class="fs">+ = pump above liquid</span>
+      </div>
+      <div class="fld">
+        <label class="fl">Discharge Head (ft)</label>
+        <input type="number" id="dhead" value="10" step="0.5" min="0" oninput="calc()">
+        <span class="fs">vertical rise to truck</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sg-blk">
+    <div class="sg-lbl">Suction Piping — Sch 80 PVC</div>
+    <div class="pcard">
+      <div class="pc-h">↑ Suction Side</div>
+      <div class="fld">
+        <label class="fl">Nominal Pipe Size</label>
+        <select id="ssize" onchange="calc()">
+          <option value="1.5">1½"</option>
+          <option value="2">2"</option>
+          <option value="2.5">2½"</option>
+          <option value="3" selected>3"</option>
+          <option value="4">4"</option>
+          <option value="6">6"</option>
+          <option value="8">8"</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label class="fl">Straight Run (ft)</label>
+        <input type="number" id="slen" value="20" step="1" min="0" oninput="calc()">
+      </div>
+      <div class="g2">
+        <div class="fld">
+          <label class="fl"># 90° Elbows</label>
+          <input type="number" id="s90" value="2" step="1" min="0" oninput="calc()">
+        </div>
+        <div class="fld">
+          <label class="fl"># 45° Elbows</label>
+          <input type="number" id="s45" value="0" step="1" min="0" oninput="calc()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sg-blk">
+    <div class="sg-lbl">Discharge Piping — Sch 80 PVC</div>
+    <div class="pcard">
+      <div class="pc-h">↓ Discharge Side</div>
+      <div class="fld">
+        <label class="fl">Nominal Pipe Size</label>
+        <select id="dsize" onchange="calc()">
+          <option value="1.5">1½"</option>
+          <option value="2">2"</option>
+          <option value="2.5">2½"</option>
+          <option value="3" selected>3"</option>
+          <option value="4">4"</option>
+          <option value="6">6"</option>
+          <option value="8">8"</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label class="fl">Straight Run (ft)</label>
+        <input type="number" id="dlen" value="50" step="1" min="0" oninput="calc()">
+      </div>
+      <div class="g2">
+        <div class="fld">
+          <label class="fl"># 90° Elbows</label>
+          <input type="number" id="d90" value="3" step="1" min="0" oninput="calc()">
+        </div>
+        <div class="fld">
+          <label class="fl"># 45° Elbows</label>
+          <input type="number" id="d45" value="1" step="1" min="0" oninput="calc()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sg-blk">
+    <div class="note">
+      <strong>Hydraulic Model Basis</strong><br>
+      Sch 80 PVC IDs per ASTM D1785 &bull; Roughness ε = 0.000005 ft &bull;
+      Darcy-Weisbach friction loss &bull; Swamee-Jain explicit f &bull;
+      90° std elbow L/D = 30 &bull; 45° elbow L/D = 16 &bull;
+      Entrance K = 0.5 &bull; Exit K = 1.0 &bull;
+      Slurry viscosity: Thomas (1965) model &bull;
+      Slurry density: mass balance (SG solids = 1.4 organic) &bull;
+      Pump η = 65% &bull; Motor sized to 125% BHP, next std NEMA frame
+    </div>
+  </div>
+
+</div><!-- /sidebar -->
+
+<div class="main">
+
+  <!-- Print-only project header -->
+  <div id="print-header" style="display:none;border:2px solid var(--green);border-radius:5px;overflow:hidden;margin-bottom:4px">
+    <div style="background:var(--green);padding:12px 18px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;color:#fff;letter-spacing:2px">VIRESCO</div>
+        <div style="color:rgba(255,255,255,.8);font-size:11px;margin-top:2px">Load Out Hydraulic Analysis — Schedule 80 PVC</div>
+      </div>
+      <div style="text-align:right;color:rgba(255,255,255,.85);font-size:11px;line-height:1.7">
+        <span id="ph-date"></span><br>
+        <span id="ph-by"></span>
+      </div>
+    </div>
+    <div style="padding:12px 18px;background:#fff;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink3);margin-bottom:3px">Project</div>
+        <div style="font-size:15px;font-weight:700;color:var(--ink)" id="ph-name">—</div>
+        <div style="font-size:12px;color:var(--ink2);margin-top:2px" id="ph-customer"></div>
+      </div>
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink3);margin-bottom:3px">Description</div>
+        <div style="font-size:12px;color:var(--ink2);line-height:1.5" id="ph-desc">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero" style="grid-template-columns:repeat(5,1fr)">
+    <div class="hi"><div class="hl">Required Flow Rate</div><div class="hv" id="h-gpm">—</div><div class="hu">GPM</div></div>
+    <div class="hi"><div class="hl">Total Dynamic Head</div><div class="hv" id="h-tdh">—</div><div class="hu">ft</div></div>
+    <div class="hi"><div class="hl">Pump Pressure</div><div class="hv" id="h-psi">—</div><div class="hu">PSI</div></div>
+    <div class="hi"><div class="hl">Pump BHP</div><div class="hv" id="h-bhp">—</div><div class="hu">HP @ 65% eff.</div></div>
+    <div class="hi"><div class="hl">NPSHa</div><div class="hv" id="h-npsha">—</div><div class="hu">ft available</div></div>
+  </div>
+
+  <!-- Pipe capacity comparison bar -->
+  <div id="cap-card" class="card" style="border-width:2px"></div>
+
+  <div class="flags" id="flags"></div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="ch">Suction Side — Sch 80 PVC Detail</div>
+      <div class="rt">
+        <div class="rr"><span class="rlab">Sch 80 PVC Actual ID</span><span class="rval" id="s-id">—</span></div>
+        <div class="rr"><span class="rlab">Flow Velocity</span><span class="rval" id="s-vel">—</span></div>
+        <div class="rr"><span class="rlab">Reynolds Number</span><span class="rval" id="s-re">—</span></div>
+        <div class="rr"><span class="rlab">Flow Regime</span><span class="rval" id="s-regime">—</span></div>
+        <div class="rr"><span class="rlab">Darcy Friction Factor</span><span class="rval" id="s-f">—</span></div>
+        <div class="rr"><span class="rlab">Straight Pipe Loss</span><span class="rval" id="s-hpipe">—</span></div>
+        <div class="rr"><span class="rlab">Fitting Equiv. Length</span><span class="rval" id="s-leq">—</span></div>
+        <div class="rr"><span class="rlab">Fitting Head Loss</span><span class="rval" id="s-hfit">—</span></div>
+        <div class="rr"><span class="rlab">Entrance Loss (K=0.5)</span><span class="rval" id="s-hent">—</span></div>
+        <div class="rr hi2"><span class="rlab" style="font-weight:600">Total Suction Loss</span><span class="rval em" id="s-total">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch">Discharge Side — Sch 80 PVC Detail</div>
+      <div class="rt">
+        <div class="rr"><span class="rlab">Sch 80 PVC Actual ID</span><span class="rval" id="d-id">—</span></div>
+        <div class="rr"><span class="rlab">Flow Velocity</span><span class="rval" id="d-vel">—</span></div>
+        <div class="rr"><span class="rlab">Reynolds Number</span><span class="rval" id="d-re">—</span></div>
+        <div class="rr"><span class="rlab">Flow Regime</span><span class="rval" id="d-regime">—</span></div>
+        <div class="rr"><span class="rlab">Darcy Friction Factor</span><span class="rval" id="d-f">—</span></div>
+        <div class="rr"><span class="rlab">Straight Pipe Loss</span><span class="rval" id="d-hpipe">—</span></div>
+        <div class="rr"><span class="rlab">Fitting Equiv. Length</span><span class="rval" id="d-leq">—</span></div>
+        <div class="rr"><span class="rlab">Fitting Head Loss</span><span class="rval" id="d-hfit">—</span></div>
+        <div class="rr"><span class="rlab">Exit Loss (K=1.0)</span><span class="rval" id="d-hexit">—</span></div>
+        <div class="rr hi2"><span class="rlab" style="font-weight:600">Total Discharge Loss</span><span class="rval em" id="d-total">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="ch g">TDH Breakdown</div>
+      <div id="bar-chart" class="bars"></div>
+      <div class="rt">
+        <div class="rr"><span class="rlab">Static Suction Lift</span><span class="rval" id="t-sl">—</span></div>
+        <div class="rr"><span class="rlab">Static Discharge Head</span><span class="rval" id="t-dh">—</span></div>
+        <div class="rr"><span class="rlab">Total Static Head</span><span class="rval" id="t-st">—</span></div>
+        <div class="rr"><span class="rlab">Suction Friction Total</span><span class="rval" id="t-sf">—</span></div>
+        <div class="rr"><span class="rlab">Discharge Friction Total</span><span class="rval" id="t-df">—</span></div>
+        <div class="rr"><span class="rlab">Velocity Head (discharge)</span><span class="rval" id="t-vh">—</span></div>
+        <div class="rr hi2"><span class="rlab" style="font-weight:600">TDH</span><span class="rval em" id="t-tdh">—</span></div>
+        <div class="rr"><span class="rlab">Friction % of TDH</span><span class="rval" id="t-pct">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch g">Slurry Properties — Derived</div>
+      <div class="rt">
+        <div class="rr"><span class="rlab">Slurry Density</span><span class="rval" id="f-dens">—</span></div>
+        <div class="rr"><span class="rlab">Solids Vol. Fraction (Cv)</span><span class="rval" id="f-cv">—</span></div>
+        <div class="rr"><span class="rlab">Water Viscosity @ T</span><span class="rval" id="f-muw">—</span></div>
+        <div class="rr"><span class="rlab">Relative Viscosity (μr)</span><span class="rval" id="f-mur">—</span></div>
+        <div class="rr"><span class="rlab">Slurry Viscosity</span><span class="rval" id="f-mus">—</span></div>
+        <div class="rr"><span class="rlab">Vapor Pressure @ T</span><span class="rval" id="f-pv">—</span></div>
+        <div class="rr"><span class="rlab">Atm Head (ft of slurry)</span><span class="rval" id="f-pa">—</span></div>
+        <div class="rr"><span class="rlab">Min Motor (125% BHP)</span><span class="rval" id="f-mot">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch g">System Curve — TDH vs. Flow Rate (Friction ∝ Q²)</div>
+    <table class="syst">
+      <thead>
+        <tr>
+          <th>Point</th><th>GPM</th><th>Static (ft)</th>
+          <th>Suc. Friction (ft)</th><th>Dis. Friction (ft)</th>
+          <th>TDH (ft)</th><th>Press (PSI)</th><th>BHP</th>
+        </tr>
+      </thead>
+      <tbody id="sys-body"></tbody>
+    </table>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── Schedule 80 PVC Actual IDs (inches) per ASTM D1785
+const SCH80 = {'1.5':1.500,'2':1.939,'2.5':2.323,'3':2.900,'4':3.826,'6':5.761,'8':7.625};
+
+const EPS   = 0.000005; // roughness ft (smooth PVC)
+const G     = 32.174;   // ft/s²
+const C     = 0.002228; // GPM to ft³/s
+const LD90  = 30;       // std 90° elbow L/D (equivalent length method)
+const LD45  = 16;       // 45° elbow L/D
+const KENT  = 0.5;      // sharp entrance K
+const KEXIT = 1.0;      // pipe exit K
+const EFF   = 0.65;     // pump hydraulic efficiency
+const SGS   = 1.4;      // SG of organic solids (digestate)
+
+// Water dynamic viscosity (cP) vs °F — interpolation table
+const MU_TBL = [[32,1.791],[40,1.546],[50,1.307],[60,1.105],[70,1.002],
+                 [80,0.862],[90,0.769],[100,0.653],[120,0.560],[140,0.431],[160,0.364],[180,0.305]];
+// Water vapor pressure (psia) vs °F
+const PV_TBL = [[32,0.0886],[40,0.1217],[50,0.1781],[60,0.2563],[70,0.3632],
+                 [80,0.5069],[90,0.6982],[100,0.9503],[120,1.693],[140,2.889],[160,4.741],[180,7.511]];
+
+function lerp(tbl, x) {
+  if (x <= tbl[0][0]) return tbl[0][1];
+  if (x >= tbl[tbl.length-1][0]) return tbl[tbl.length-1][1];
+  for (let i = 0; i < tbl.length-1; i++) {
+    if (x >= tbl[i][0] && x <= tbl[i+1][0]) {
+      const t = (x-tbl[i][0])/(tbl[i+1][0]-tbl[i][0]);
+      return tbl[i][1] + t*(tbl[i+1][1]-tbl[i][1]);
+    }
+  }
+}
+
+// Swamee-Jain explicit Colebrook approximation
+function ff(Re, D) {
+  if (Re < 2300) return 64/Re;
+  if (Re < 4000) {
+    const fl = 64/2300;
+    const e2 = EPS/(3.7*D)+5.74/Math.pow(4000,0.9);
+    const ft = 0.25/Math.pow(Math.log10(e2),2);
+    return fl+((Re-2300)/1700)*(ft-fl);
+  }
+  const e = EPS/(3.7*D)+5.74/Math.pow(Re,0.9);
+  return 0.25/Math.pow(Math.log10(e),2);
+}
+
+// Thomas (1965) slurry relative viscosity
+function mu_r(Cv) {
+  if (Cv<=0) return 1;
+  return 1+2.5*Cv+10.05*Cv*Cv+0.00273*Math.exp(16.6*Cv);
+}
+
+// Pipe section hydraulic calculation
+function pipeCalc(Q, nom, L, n90, n45, mu_cP, SG, issuction) {
+  const D_in = SCH80[String(nom)];
+  const D    = D_in/12;
+  const A    = Math.PI/4*D*D;
+  const V    = Q*C/A;
+  const rho  = SG*62.4;
+  const nu   = (mu_cP*0.000672)/rho;
+  const Re   = V*D/nu;
+  const f    = ff(Re,D);
+  const hv   = V*V/(2*G);
+  const hp   = f*(L/D)*hv;
+  const Leq  = (n90*LD90+n45*LD45)*D;
+  const hfit = f*(Leq/D)*hv;
+  const hmin = (issuction?KENT:KEXIT)*hv;
+  const reg  = Re<2300?'Laminar':Re<4000?'Transition':'Turbulent';
+  return {D_in,D,V,Re,f,hp,Leq,hfit,hmin,hv,reg};
+}
+
+function motorSize(bhp) {
+  const m=[0.5,0.75,1,1.5,2,3,5,7.5,10,15,20,25,30,40,50,60,75,100,125,150,200];
+  const req=bhp*1.25;
+  for(const s of m) if(s>=req) return s+' HP';
+  return '200+ HP';
+}
+
+function set(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
+function fmtRe(r){return r>1e6?(r/1e6).toFixed(2)+'M':r>1e3?(r/1e3).toFixed(1)+'k':Math.round(r).toString();}
+
+function nextPipeSize(nom) {
+  const sizes = ['1.5','2','2.5','3','4','6','8'];
+  const i = sizes.indexOf(String(nom));
+  return i >= 0 && i < sizes.length-1 ? sizes[i+1]+'"' : '8"+ (consult engineer)';
+}
+
+function printReport() {
+  // Sync print header fields before printing
+  const name     = document.getElementById('proj_name').value     || 'Untitled Project';
+  const customer = document.getElementById('proj_customer').value || '';
+  const by       = document.getElementById('proj_by').value       || '';
+  const dateVal  = document.getElementById('proj_date').value;
+  const desc     = document.getElementById('proj_desc').value     || '—';
+
+  const dateStr = dateVal
+    ? new Date(dateVal + 'T12:00:00').toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})
+    : new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+
+  document.getElementById('ph-name').textContent     = name;
+  document.getElementById('ph-customer').textContent = customer;
+  document.getElementById('ph-by').textContent       = by ? 'Prepared by: ' + by : '';
+  document.getElementById('ph-date').textContent     = dateStr;
+  document.getElementById('ph-desc').textContent     = desc;
+  document.getElementById('print-header').style.display = 'block';
+
+  window.print();
+
+  // Hide again after print dialog closes
+  setTimeout(() => {
+    document.getElementById('print-header').style.display = 'none';
+  }, 1000);
+}
+
+function calc() {
+  const truck_cap = +document.getElementById('truck_cap').value || 4000;
+  const fill_time = +document.getElementById('fill_time').value || 20;
+  const Q  = truck_cap / fill_time;   // required GPM — auto calculated
+  const Qt = Q;                        // design = target, deviation always 0 now — remove old flag
+  const SG  = +document.getElementById('sg').value     || 1;
+  const Cw  = (+document.getElementById('solids').value||0)/100;
+  const T   = +document.getElementById('temp').value   || 70;
+  const hs  = +document.getElementById('slift').value  || 0;
+  const hd  = +document.getElementById('dhead').value  || 0;
+  const sn  = document.getElementById('ssize').value;
+  const sl  = +document.getElementById('slen').value   || 0;
+  const s90 = +document.getElementById('s90').value    || 0;
+  const s45 = +document.getElementById('s45').value    || 0;
+  const dn  = document.getElementById('dsize').value;
+  const dl  = +document.getElementById('dlen').value   || 0;
+  const d90 = +document.getElementById('d90').value    || 0;
+  const d45 = +document.getElementById('d45').value    || 0;
+
+  const mu_w = lerp(MU_TBL, T);
+  const Pvap = lerp(PV_TBL, T);
+
+  // Solids volume fraction: Cv = Cw*SG/SGS (approximate mass balance)
+  const Cv = Cw>0 ? Math.min((Cw*SG)/SGS, 0.65) : 0;
+  const mr = mu_r(Cv);
+  const mu_s = mu_w*mr;
+
+  const S = pipeCalc(Q, sn, sl, s90, s45, mu_s, SG, true);
+  const D = pipeCalc(Q, dn, dl, d90, d45, mu_s, SG, false);
+
+  const sf  = S.hp+S.hfit+S.hmin;
+  const df  = D.hp+D.hfit+D.hmin;
+  const stH = hs+hd;
+  const tdh = stH+sf+df+D.hv;
+
+  const Patm_ft = 14.696*2.31/SG;
+  const Pv_ft   = Pvap*2.31/SG;
+  const npsha   = Patm_ft-Pv_ft-hs-sf;
+  const psi     = tdh*SG/2.31;
+  const bhp     = (Q*tdh*SG)/(3960*EFF);
+  const pct     = tdh>0?(sf+df)/tdh*100:0;
+
+  set('h-gpm',   Q.toFixed(1));
+  set('h-tdh',   tdh.toFixed(1));
+  set('h-psi',   psi.toFixed(1));
+  set('h-bhp',   bhp.toFixed(1));
+  set('h-npsha', npsha.toFixed(1));
+
+  set('s-id',     S.D_in.toFixed(3)+'" ID');
+  set('s-vel',    S.V.toFixed(2)+' ft/s');
+  set('s-re',     fmtRe(S.Re));
+  set('s-regime', S.reg);
+  set('s-f',      S.f.toFixed(5));
+  set('s-hpipe',  S.hp.toFixed(3)+' ft');
+  set('s-leq',    S.Leq.toFixed(1)+' ft equiv.');
+  set('s-hfit',   S.hfit.toFixed(3)+' ft');
+  set('s-hent',   S.hmin.toFixed(3)+' ft');
+  set('s-total',  sf.toFixed(3)+' ft');
+
+  set('d-id',     D.D_in.toFixed(3)+'" ID');
+  set('d-vel',    D.V.toFixed(2)+' ft/s');
+  set('d-re',     fmtRe(D.Re));
+  set('d-regime', D.reg);
+  set('d-f',      D.f.toFixed(5));
+  set('d-hpipe',  D.hp.toFixed(3)+' ft');
+  set('d-leq',    D.Leq.toFixed(1)+' ft equiv.');
+  set('d-hfit',   D.hfit.toFixed(3)+' ft');
+  set('d-hexit',  D.hmin.toFixed(3)+' ft');
+  set('d-total',  df.toFixed(3)+' ft');
+
+  set('t-sl',  hs.toFixed(1)+' ft');
+  set('t-dh',  hd.toFixed(1)+' ft');
+  set('t-st',  stH.toFixed(1)+' ft');
+  set('t-sf',  sf.toFixed(3)+' ft');
+  set('t-df',  df.toFixed(3)+' ft');
+  set('t-vh',  D.hv.toFixed(3)+' ft');
+  set('t-tdh', tdh.toFixed(1)+' ft');
+  set('t-pct', pct.toFixed(1)+'%');
+
+  set('f-dens', (SG*62.4).toFixed(2)+' lb/ft³');
+  set('f-cv',   (Cv*100).toFixed(2)+' vol%');
+  set('f-muw',  mu_w.toFixed(3)+' cP');
+  set('f-mur',  mr.toFixed(3)+'×');
+  set('f-mus',  mu_s.toFixed(3)+' cP');
+  set('f-pv',   Pvap.toFixed(4)+' psia');
+  set('f-pa',   Patm_ft.toFixed(1)+' ft');
+  set('f-mot',  motorSize(bhp));
+
+  // ── Theoretical pipe capacity (max GPM at 8 ft/s slurry limit)
+  const V_MAX   = 8.0; // ft/s max slurry velocity
+  const D_s_ft  = SCH80[String(sn)] / 12;
+  const D_d_ft  = SCH80[String(dn)] / 12;
+  const A_s     = Math.PI/4 * D_s_ft * D_s_ft;
+  const A_d     = Math.PI/4 * D_d_ft * D_d_ft;
+  const maxQ_s  = (V_MAX * A_s) / C;   // suction max GPM
+  const maxQ_d  = (V_MAX * A_d) / C;   // discharge max GPM
+  const maxQ    = Math.min(maxQ_s, maxQ_d); // system is limited by smaller
+  const limSide = maxQ_s < maxQ_d ? 'Suction' : 'Discharge';
+  const dev     = ((Q - maxQ) / maxQ) * 100; // + = over capacity, - = under
+  const capOk   = Q <= maxQ;
+  const absDev  = Math.abs(dev);
+  const capCls  = capOk ? (absDev < 15 ? 'var(--green)' : 'var(--amber)') : 'var(--red)';
+  const capBg   = capOk ? (absDev < 15 ? 'var(--green-light)' : 'var(--amber-bg)') : 'var(--red-bg)';
+  const capIcon = capOk ? (absDev < 15 ? '✓' : '⚠') : '✕';
+  const devLabel = capOk
+    ? `${absDev.toFixed(1)}% under pipe capacity — system can deliver the required flow`
+    : `${absDev.toFixed(1)}% OVER pipe capacity — ${limSide.toLowerCase()} pipe cannot deliver ${Q.toFixed(0)} GPM at ≤8 ft/s`;
+
+  // Actual velocity at required flow for each pipe
+  const actV_s = Q * C / A_s;
+  const actV_d = Q * C / A_d;
+
+  document.getElementById('cap-card').innerHTML = `
+    <div class="ch" style="background:${capCls};display:flex;justify-content:space-between;align-items:center">
+      <span>Pipe Capacity vs. Required Flow — Limiting Side: ${limSide} (${sn}")</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;opacity:.9">${capIcon} ${dev>0?'+':''}${dev.toFixed(1)}%</span>
+    </div>
+    <div style="background:${capBg};padding:12px 14px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid var(--rule)">
+      <div style="text-align:center;padding:0 8px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Required GPM</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:var(--ink)">${Q.toFixed(1)}</div>
+      </div>
+      <div style="text-align:center;padding:0 8px;border-left:1px solid var(--rule)">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Suction Max (8 ft/s)</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:${maxQ_s<Q?'var(--red)':'var(--green)'}">${maxQ_s.toFixed(1)}</div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:2px">actual: ${actV_s.toFixed(2)} ft/s</div>
+      </div>
+      <div style="text-align:center;padding:0 8px;border-left:1px solid var(--rule)">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Discharge Max (8 ft/s)</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:${maxQ_d<Q?'var(--red)':'var(--green)'}">${maxQ_d.toFixed(1)}</div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:2px">actual: ${actV_d.toFixed(2)} ft/s</div>
+      </div>
+      <div style="text-align:center;padding:0 8px;border-left:1px solid var(--rule)">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">System Capacity</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:${capCls}">${maxQ.toFixed(1)}</div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:2px">limited by ${limSide.toLowerCase()}</div>
+      </div>
+    </div>
+    <div style="padding:9px 14px;font-size:12px;color:${capOk?'#1b4a1b':'#5c1010'};background:${capBg}">
+      ${capIcon} <strong>${dev>0?'+':''}${dev.toFixed(1)}%</strong> — ${devLabel}
+    </div>`;
+
+  // ── Show derived GPM inline
+  const gpmInline = document.getElementById('gpm-flag-inline');
+  gpmInline.innerHTML = `<div class="flag f-ok" style="margin-top:0;font-size:11px;padding:5px 9px">
+    <span class="fi" style="font-size:12px">→</span>
+    <span>Required flow: <strong>${Q.toFixed(1)} GPM</strong> (${truck_cap} gal ÷ ${fill_time} min)</span>
+  </div>`;
+
+  // Bar chart
+  const barData = [
+    {l:'Static Head',        v:stH, c:'c1'},
+    {l:'Suction Friction',   v:sf,  c:'c2'},
+    {l:'Discharge Friction', v:df,  c:'c3'},
+    {l:'Velocity Head',      v:D.hv,c:'c4'}
+  ];
+  document.getElementById('bar-chart').innerHTML = barData.map(b=>
+    `<div class="bi"><span class="bl">${b.l}</span>
+     <div class="bt"><div class="bf ${b.c}" style="width:${tdh>0?Math.max(0,b.v/tdh*100).toFixed(1):0}%"></div></div>
+     <span class="bn">${b.v.toFixed(1)} ft</span></div>`
+  ).join('');
+
+  // Flags
+  const flags = [];
+
+  // Pipe capacity over/under flag
+  if (!capOk) {
+    flags.push({t:'err', m:`Required ${Q.toFixed(1)} GPM exceeds ${limSide.toLowerCase()} pipe capacity of ${maxQ.toFixed(1)} GPM (${absDev.toFixed(1)}% over). The ${limSide.toLowerCase()} pipe cannot deliver this flow at safe slurry velocity — upsize to ${limSide==='Suction'?nextPipeSize(sn):nextPipeSize(dn)}.`});
+  } else if (absDev < 10) {
+    flags.push({t:'ok', m:`Required ${Q.toFixed(1)} GPM is within pipe capacity of ${maxQ.toFixed(1)} GPM (${absDev.toFixed(1)}% under limit). Good margin.`});
+  } else {
+    flags.push({t:'ok', m:`Required ${Q.toFixed(1)} GPM is well within pipe capacity of ${maxQ.toFixed(1)} GPM (${absDev.toFixed(1)}% under limit).`});
+  }
+  // Velocity
+  function velFlag(v, side) {
+    if (v<2.0 && Cv>0.02) flags.push({t:'err',m:`${side} velocity ${v.toFixed(2)} ft/s is below 2 ft/s minimum for slurry transport — solids will settle and plug the line.`});
+    else if (v<2.0)        flags.push({t:'warn',m:`${side} velocity ${v.toFixed(2)} ft/s is low. Fine for clean liquid, but watch if solids content increases.`});
+    else if (v>10)         flags.push({t:'warn',m:`${side} velocity ${v.toFixed(2)} ft/s exceeds 10 ft/s. Accelerated wear on Sch 80 PVC fittings and pump casing. Upsize pipe.`});
+    else                   flags.push({t:'ok',m:`${side} velocity ${v.toFixed(2)} ft/s — within acceptable range (2–10 ft/s) for slurry service.`});
+  }
+  velFlag(S.V, 'Suction');
+  velFlag(D.V, 'Discharge');
+
+  // Pipe size ratio
+  const snN = parseFloat(sn), dnN = parseFloat(dn);
+  if      (snN < dnN)  flags.push({t:'err', m:`Suction pipe (${sn}") is smaller than discharge (${dn}"). Suction must be ≥ discharge. This will starve the pump — flip it or upsize suction.`});
+  else if (snN === dnN) flags.push({t:'warn',m:`Suction and discharge are the same size (${sn}"). Best practice: suction one pipe size larger than discharge to minimize NPSHa losses.`});
+
+  // NPSHa
+  if      (npsha < 0)  flags.push({t:'err', m:`NPSHa = ${npsha.toFixed(1)} ft — NEGATIVE. Cavitation is guaranteed. Reduce suction lift, shorten suction run, or upsize suction pipe.`});
+  else if (npsha < 5)  flags.push({t:'err', m:`NPSHa = ${npsha.toFixed(1)} ft — critically low. Most pumps need NPSHr ≥ 5 ft, plus a 2–3 ft safety margin.`});
+  else if (npsha < 10) flags.push({t:'warn',m:`NPSHa = ${npsha.toFixed(1)} ft — marginal. Verify against pump NPSHr datasheet and confirm minimum 2 ft margin.`});
+  else                 flags.push({t:'ok',  m:`NPSHa = ${npsha.toFixed(1)} ft — adequate. Confirm against pump manufacturer's NPSHr spec.`});
+
+  // Friction ratio
+  if      (pct > 60) flags.push({t:'warn',m:`Friction = ${pct.toFixed(0)}% of TDH. Pipe is undersized for this flow rate. Upsizing would significantly reduce energy cost and wear.`});
+  else if (pct > 40) flags.push({t:'warn',m:`Friction = ${pct.toFixed(0)}% of TDH. Acceptable but on the high side — review fitting count and run lengths.`});
+  else               flags.push({t:'ok',  m:`Friction = ${pct.toFixed(0)}% of TDH — well-balanced system.`});
+
+  // PVC temp limit
+  if      (T > 140) flags.push({t:'err', m:`Fluid temp ${T}°F exceeds Sch 80 PVC derate threshold (~140°F). Switch to CPVC or 316SS at this temperature.`});
+  else if (T > 110) flags.push({t:'warn',m:`Fluid temp ${T}°F: Sch 80 PVC pressure ratings derate above 110°F. Verify fitting pressure ratings at operating temperature.`});
+
+  // High solids
+  if (Cv > 0.20) flags.push({t:'warn',m:`High solids volume fraction (${(Cv*100).toFixed(1)} vol%). Thomas model accuracy decreases above ~20% Cv. Confirm pump selection with manufacturer for high-solids slurry.`});
+
+  document.getElementById('flags').innerHTML = flags.map(f=>
+    `<div class="flag f-${f.t}"><span class="fi">${f.t==='ok'?'✓':f.t==='warn'?'⚠':'✕'}</span><span>${f.m}</span></div>`
+  ).join('');
+
+  // System curve — friction scales Q²
+  const pts = [0.25,0.50,0.75,1.0,1.10,1.25,1.50];
+  document.getElementById('sys-body').innerHTML = pts.map(p=>{
+    const q  = Q*p;
+    const sf2 = sf*p*p;
+    const df2 = df*p*p;
+    const t2  = stH+sf2+df2;
+    const ps2 = t2*SG/2.31;
+    const b2  = (q*t2*SG)/(3960*EFF);
+    return `<tr${p===1.0?' class="design"':''}><td>${p===1.0?'★ Design Point':(p*100).toFixed(0)+'% Flow'}</td>
+      <td>${q.toFixed(0)}</td><td>${stH.toFixed(1)}</td>
+      <td>${sf2.toFixed(2)}</td><td>${df2.toFixed(2)}</td>
+      <td>${t2.toFixed(1)}</td><td>${ps2.toFixed(1)}</td><td>${b2.toFixed(1)}</td></tr>`;
+  }).join('');
+}
+
+// Set today's date as default
+document.getElementById('proj_date').value = new Date().toISOString().split('T')[0];
+calc();
+</script>
+</body>
+</html>
